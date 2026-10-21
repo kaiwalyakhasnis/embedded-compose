@@ -11,24 +11,31 @@ die() { echo "ec: $*" >&2; exit 1; }
 note() { echo "==> $*" >&2; }
 
 # Downloads <url> into $EC_DL once and checks its sha256. Prints the path.
+# Sum "-" skips the check: for archives generated on the fly (GitHub,
+# gitiles), whose bytes aren't stable; their URL pins a commit instead.
+# [name] overrides the file name.
 fetch() {
-  url=$1 sum=$2 f=$EC_DL/${1##*/}
+  url=$1 sum=$2 f=$EC_DL/${3:-${1##*/}}
   mkdir -p "$EC_DL"
   if [ ! -f "$f" ]; then
     note "downloading $url"
     curl -fL --retry 3 -o "$f.part" "$url" || die "download failed: $url"
     mv "$f.part" "$f"
   fi
-  echo "$sum  $f" | sha256sum -c --quiet - >&2 || die "checksum mismatch: $f (delete it to re-download)"
+  if [ "$sum" != - ]; then
+    echo "$sum  $f" | sha256sum -c --quiet - >&2 || die "checksum mismatch: $f (delete it to re-download)"
+  fi
   echo "$f"
 }
 
-# Unpacks <tarball> into <dir> unless already there.
+# Unpacks <tarball> into <dir> unless already there. [strip] leading path
+# components (default 1; 0 for archives without a top directory).
 unpack() {
   [ -d "$2" ] && return 0
   note "unpacking ${1##*/}"
+  rm -rf "$2.tmp"
   mkdir -p "$2.tmp"
-  tar -xf "$1" -C "$2.tmp" --strip-components=1
+  tar -xf "$1" -C "$2.tmp" --strip-components="${3:-1}"
   mv "$2.tmp" "$2"
 }
 

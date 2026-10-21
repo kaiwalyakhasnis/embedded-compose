@@ -7,6 +7,7 @@
 #   ./ec test  <board> [args]       UI test on an emulated board (tools/uitest.py --help)
 #   ./ec shot  <board> [file.png]   screenshot of a running emulated board
 #   ./ec record <board> [file.gif]  scripted tour of the demo as a GIF (emulated boards)
+#   ./ec package <board>            standalone release archive in out/<board>/
 #   ./ec clean [<board>]            delete out/<board> (or all of out/)
 #
 # Environment: APP=<name> (apps/<name>, default demo), HEADLESS=1, TRACE=1,
@@ -19,7 +20,7 @@ EC_ROOT=$(cd "$(dirname "$0")" && pwd)
 
 APP=${APP:-demo}
 
-usage() { sed -n '2,14s/^# \{0,1\}//p' "$0"; exit "${1:-0}"; }
+usage() { sed -n '2,15s/^# \{0,1\}//p' "$0"; exit "${1:-0}"; }
 
 # Loads boards/<name>/board.sh (+ its local.env) into this shell.
 load_board() {
@@ -117,6 +118,26 @@ cmd_record() {
   exec python3 "$EC_ROOT/tools/tour.py" --run "$EC_ROOT/ec run $BOARD" --out "$BOARD_OUT" "${2:-$BOARD_OUT/tour.gif}"
 }
 
+# A board's built image as a self-contained archive: QEMU boards get their
+# kernel, initramfs and a run.sh; other boards provide board_package.
+cmd_package() {
+  load_board "$1"
+  [ -f "$BOARD_OUT/initramfs.cpio.gz" ] || die "build it first: ./ec build $BOARD"
+  INITRAMFS=$BOARD_OUT/initramfs.cpio.gz
+  name=embedded-compose-$BOARD
+  pkg=$BOARD_OUT/package/$name
+  rm -rf "$BOARD_OUT/package"
+  mkdir -p "$pkg"
+  if [ -n "$BOARD_EMULATED" ]; then
+    EC_QEMU_SCRIPT=$pkg/run.sh board_run
+  else
+    board_package "$pkg"
+  fi
+  (cd "$pkg" && sha256sum $(ls | grep -v SHA256SUMS) > SHA256SUMS)
+  tar -C "$BOARD_OUT/package" -czf "$BOARD_OUT/$name.tar.gz" "$name"
+  note "$(ls -l "$BOARD_OUT/$name.tar.gz" | awk '{print $5}') bytes: out/$BOARD/$name.tar.gz"
+}
+
 cmd_shot() {
   load_board "$1"
   exec python3 "$EC_ROOT/tools/qmp.py" --out "$BOARD_OUT" shot ${2:+"$2"}
@@ -134,7 +155,7 @@ cmd_clean() {
 }
 
 case $1 in
-  build|run|test|shot|record|clean|boards) c=$1; shift; "cmd_$c" "$@" ;;
+  build|run|test|shot|record|package|clean|boards) c=$1; shift; "cmd_$c" "$@" ;;
   -h|--help|help|"") usage ;;
   *) usage 1 ;;
 esac

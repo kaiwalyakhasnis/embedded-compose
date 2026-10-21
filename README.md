@@ -45,9 +45,9 @@ Measured on the Nexus 5X (Snapdragon 808, 1080x1920) running the demo:
 |---|---|
 | UI binary | 2.9 MB (static, stripped: app + Compose runtime + minui + libpng/zlib) |
 | Boot image ramdisk | 2.4 MB (binary + busybox + init + font) |
-| App memory (RSS) | 7 MB idle after start, ~20 MB while animating |
+| App memory (RSS) | 7 MB idle after start, ~12 MB while animating |
 | Whole system in use | ~140 MB of 1.8 GB, kernel included (no Android: init, the app, nothing else) |
-| Animation | ~52 fps, 19 ms per frame (software rendering, one CPU core) |
+| Animation | ~53 fps, 19 ms per frame (software rendering, one CPU core) |
 | Boot to first frame | ~3 s after the kernel starts |
 
 ## Tested on
@@ -64,7 +64,11 @@ screen.
 
 ## Try it
 
-Requirements (Ubuntu/Debian):
+**Prebuilt:** [Releases](https://github.com/kaiwalyakhasnis/embedded-compose/releases) has a
+`fastboot boot` image for the Nexus 5X and ready-to-run archives for both QEMU
+boards (`./run.sh`, needs only `qemu-system-arm`).
+
+**From source.** Requirements (Ubuntu/Debian):
 
 ```sh
 sudo apt install g++-aarch64-linux-gnu qemu-system-arm python3-pil openjdk-17-jdk-headless \
@@ -87,11 +91,12 @@ Gradle downloads Kotlin/Native and the Compose runtime on first use.
 and a reboot returns it to its own system:
 
 ```sh
-echo 'BOOT_IMG=/path/to/lineage-15.1-boot-or-recovery.img' > boards/nexus5x/local.env
-./ec build nexus5x                # EC_DEV_USB=1 ./ec build nexus5x: adds a USB shell (dev)
+./ec build nexus5x                # also builds LineageOS 15.1's kernel from source
 adb reboot bootloader
 ./ec run nexus5x                  # fastboot boot
 ```
+
+`EC_DEV_USB=1 ./ec build nexus5x` adds a USB network shell for development.
 
 Hold **Power for 3 s** to leave. With `EC_DEV_USB=1`, `boards/nexus5x/phone.py`
 gives you the log, memory stats, screenshots and the GIF tour over USB.

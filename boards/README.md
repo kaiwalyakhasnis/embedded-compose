@@ -27,6 +27,7 @@ Functions:
 |---|---|
 | `board_image` | after the initramfs (`$INITRAMFS`) is built: make whatever the board boots (a boot.img, or nothing for QEMU) |
 | `board_run` | boot it: `qemu_boot <kernel> <cmdline> <machine args>` (tools/lib/qemu.sh), or deploy to hardware |
+| `board_package` | hardware boards: put the release files in the given directory (`./ec package`; QEMU boards get kernel + initramfs + run.sh automatically) |
 
 Available to them: `$EC_ROOT`, `$BOARD`, `$BOARD_DIR`, `$BOARD_OUT`
 (`out/<board>`), `$INITRAMFS`, and the helpers in `tools/lib/`. Those helpers
