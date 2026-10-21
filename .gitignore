@@ -1,0 +1,9 @@
+# Build output, downloads and per-board state
+/out/
+# Gradle/Kotlin caches
+/.gradle/
+/.kotlin/
+# Machine-specific paths (see boards/<board>/board.sh)
+/local.env
+/boards/*/local.env
+__pycache__/

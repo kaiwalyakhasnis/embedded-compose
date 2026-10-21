@@ -1,0 +1,7 @@
+AOSP tag: android-8.1.0_r52
+Fetched: 2026-10-20 by fetch.sh from https://android.googlesource.com
+  platform/bootable/recovery   minui/, fonts/12x22.png + 18x32.png, res-xxhdpi/images/icon_error.png
+  platform/system/core         adf/libadf, libsync, base/strings (needed files only)
+  platform/external/zlib       src/*.c *.h
+  platform/external/libpng     *.c *.h
+  platform/external/libdrm     *.c *.h, include/

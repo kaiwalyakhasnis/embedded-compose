@@ -1,0 +1,4 @@
+# Kotlin bindings for core/hal/ec_hal.h, the platform contract. The symbols
+# come from a backend (backends/), linked in by backends/Makefile.
+headers = ec_hal.h
+package = hal
