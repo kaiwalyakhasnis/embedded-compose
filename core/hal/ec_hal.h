@@ -63,6 +63,7 @@ int ec_input_poll(int timeout_ms, ec_event* out, int max);
 long long ec_now_nanos(void);  // monotonic clock
 void ec_log(const char* msg);
 long ec_rss_kb(void);          // resident memory, -1 if unknown
+void ec_power_off(void);       // syncs and powers the device off
 
 // Implemented by the app (Kotlin, exported with @CName); called by the
 // backend's main().

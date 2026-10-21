@@ -23,16 +23,18 @@ import hal.EC_EV_KEY
 import hal.EC_EV_POINTER_DOWN
 import hal.EC_EV_POINTER_MOVE
 import hal.EC_EV_POINTER_UP
+import hal.ec_blank
 import hal.ec_clear
-import hal.ec_event
 import hal.ec_density
 import hal.ec_display_init
+import hal.ec_event
 import hal.ec_flip
 import hal.ec_height
 import hal.ec_input_open
 import hal.ec_input_poll
 import hal.ec_log
 import hal.ec_now_nanos
+import hal.ec_power_off
 import hal.ec_rss_kb
 import hal.ec_width
 import kotlin.coroutines.CoroutineContext
@@ -192,6 +194,25 @@ object Trace {
     var enabled = false
 }
 
+/** The device around the UI: screen power, power off, and raw input for apps that need it. */
+object Device {
+    /** Called for every key event (linux KEY_* code, 1 down / 0 up / 2 repeat) before focus handling. */
+    var onKey: ((code: Int, value: Int) -> Unit)? = null
+    /** Called for every input event of any kind (user activity). */
+    var onInput: (() -> Unit)? = null
+
+    var screenOn = true
+        private set
+
+    fun setScreen(on: Boolean) {
+        if (on == screenOn) return
+        screenOn = on
+        ec_blank(if (on) 0 else 1)
+    }
+
+    fun powerOff() = ec_power_off()
+}
+
 /**
  * With tracing on, logs "tag <name> <left> <top> <right> <bottom>" when a
  * [testTag]'s bounds change and "tag <name> gone" when it leaves the tree, so
@@ -238,6 +259,8 @@ internal class InputDispatcher(private val root: LayoutNode, private val invalid
 
     fun handle(type: Int, code: Int, value: Int, x: Int, y: Int) {
         if (Trace.enabled) log("input type=$type code=$code value=$value x=$x y=$y")
+        Device.onInput?.invoke()
+        if (type == EC_EV_KEY.toInt()) Device.onKey?.invoke(code, value)
         when (type) {
             EC_EV_POINTER_DOWN.toInt() -> pointerDown(x, y)
             EC_EV_POINTER_MOVE.toInt() -> pointerMove(x, y)

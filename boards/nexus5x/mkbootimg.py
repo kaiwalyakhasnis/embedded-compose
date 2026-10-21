@@ -33,6 +33,7 @@ p.add_argument("--kernel_offset", type=lambda x: int(x, 0), default=0x00008000)
 p.add_argument("--ramdisk_offset", type=lambda x: int(x, 0), default=0x02000000)
 p.add_argument("--tags_offset", type=lambda x: int(x, 0), default=0x01e00000)
 p.add_argument("--pagesize", type=int, default=4096)
+p.add_argument("--os_version", type=lambda x: int(x, 0), default=0, help="raw header field (version + patch level)")
 p.add_argument("-o", "--output", required=True)
 a = p.parse_args()
 
@@ -56,7 +57,7 @@ hdr = struct.pack(
     0, a.base + 0x00f00000,          # second stage: unused
     a.base + a.tags_offset,          # where LK puts the DTB for the kernel
     a.pagesize,
-    0, 0,                            # header_version 0, os_version
+    0, a.os_version,                 # header_version 0, os_version (keymaster gets it)
     b"embedded-compose",
     cmd, sha.digest(), b"")
 

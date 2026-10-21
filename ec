@@ -6,12 +6,13 @@
 #   ./ec run   <board>              boot it (QEMU window, or the board's deploy, e.g. fastboot boot)
 #   ./ec test  <board> [args]       UI test on an emulated board (tools/uitest.py --help)
 #   ./ec shot  <board> [file.png]   screenshot of a running emulated board
-#   ./ec record <board> [file.gif]  scripted tour of the demo as a GIF (emulated boards)
+#   ./ec record <board> [gif] [s]   GIF of the demo tour, or of [s] seconds of any app (emulated boards)
 #   ./ec package <board>            standalone release archive in out/<board>/
 #   ./ec clean [<board>]            delete out/<board> (or all of out/)
 #
 # Environment: APP=<name> (apps/<name>, default demo), HEADLESS=1, TRACE=1,
-# JOBS=<n>. Machine-specific paths go in boards/<board>/local.env (not in git).
+# JOBS=<n>, EC_ENV_EXTRA="NAME=value ..." (added to the app's environment).
+# Machine-specific paths go in boards/<board>/local.env (not in git).
 set -e
 EC_ROOT=$(cd "$(dirname "$0")" && pwd)
 . "$EC_ROOT/tools/lib/common.sh"
@@ -20,7 +21,7 @@ EC_ROOT=$(cd "$(dirname "$0")" && pwd)
 
 APP=${APP:-demo}
 
-usage() { sed -n '2,15s/^# \{0,1\}//p' "$0"; exit "${1:-0}"; }
+usage() { sed -n '2,16s/^# \{0,1\}//p' "$0"; exit "${1:-0}"; }
 
 # Loads boards/<name>/board.sh (+ its local.env) into this shell.
 load_board() {
@@ -71,6 +72,7 @@ build_initramfs() {
   {
     echo "EC_DENSITY=$DENSITY"
     echo "$EC_ENV"
+    printf '%s\n' $EC_ENV_EXTRA   # extra NAME=value words from the build's environment
   } | sed '/^$/d; s/^/export /' > "$BOARD_OUT/ec.env"
   list=$BOARD_OUT/initramfs.list
   {
@@ -115,7 +117,8 @@ cmd_record() {
   load_board "$1"
   [ -n "$BOARD_EMULATED" ] || die "board '$BOARD' is real hardware (see its directory for capture tools)"
   [ -f "$BOARD_OUT/initramfs.cpio.gz" ] || die "build it first: ./ec build $BOARD"
-  exec python3 "$EC_ROOT/tools/tour.py" --run "$EC_ROOT/ec run $BOARD" --out "$BOARD_OUT" "${2:-$BOARD_OUT/tour.gif}"
+  exec python3 "$EC_ROOT/tools/tour.py" --run "$EC_ROOT/ec run $BOARD" --out "$BOARD_OUT" ${3:+--seconds "$3"} \
+    "${2:-$BOARD_OUT/tour.gif}"
 }
 
 # A board's built image as a self-contained archive: QEMU boards get their

@@ -59,27 +59,34 @@ void ec_fill(int x1, int y1, int x2, int y2) {
   gr_fill(x1, y1, x2, y2);
 }
 
-// DEV ONLY (EC_DEV_CAPTURE=1): screen capture without tearing. When
-// /tmp/ec-capture exists, the frame just flipped to the screen is copied
-// from fbdev to /tmp/ec-frame (raw, fb stride) and the request is removed.
-// Done here, between frames, because the app may flip again while a slower
-// reader outside is still copying.
+// DEV ONLY (EC_DEV_CAPTURE=1, or 2 for half size): screen capture without
+// tearing. When /tmp/ec-capture exists, the frame just flipped to the screen
+// is copied from fbdev to /tmp/ec-frame and the request is removed. The file
+// is raw 32-bit pixels, rows packed (width / scale * 4 bytes). Done here,
+// between frames, because the app may flip again while a slower reader
+// outside is still copying.
 static void dev_capture() {
-  static const bool enabled = [] { const char* e = getenv("EC_DEV_CAPTURE"); return e && e[0] == '1'; }();
-  if (!enabled || access("/tmp/ec-capture", F_OK) != 0) return;
+  static const int scale = [] { const char* e = getenv("EC_DEV_CAPTURE"); return e ? atoi(e) : 0; }();
+  if (scale <= 0 || access("/tmp/ec-capture", F_OK) != 0) return;
   int fd = open("/dev/graphics/fb0", O_RDONLY | O_CLOEXEC);
   if (fd < 0) fd = open("/dev/fb0", O_RDONLY | O_CLOEXEC);
   fb_var_screeninfo vi;
   fb_fix_screeninfo fi;
   if (fd >= 0 && ioctl(fd, FBIOGET_VSCREENINFO, &vi) == 0 && ioctl(fd, FBIOGET_FSCREENINFO, &fi) == 0) {
-    size_t size = (size_t)fi.line_length * vi.yres;
-    char* buf = static_cast<char*>(malloc(size));
+    const int w = vi.xres / scale, h = vi.yres / scale;
+    uint32_t* row = static_cast<uint32_t*>(malloc(fi.line_length));
+    uint32_t* frame = static_cast<uint32_t*>(malloc((size_t)w * h * 4));
     FILE* out = fopen("/tmp/ec-frame.tmp", "we");
-    if (buf && out && pread(fd, buf, size, (off_t)fi.line_length * vi.yoffset) == (ssize_t)size) {
-      fwrite(buf, 1, size, out);
+    bool ok = row && frame && out;
+    for (int y = 0; ok && y < h; ++y) {
+      off_t at = (off_t)fi.line_length * (vi.yoffset + y * scale);
+      ok = pread(fd, row, fi.line_length, at) == (ssize_t)fi.line_length;
+      for (int x = 0; ok && x < w; ++x) frame[y * w + x] = row[x * scale];
     }
+    if (ok) fwrite(frame, 4, (size_t)w * h, out);
     if (out) fclose(out);
-    free(buf);
+    free(row);
+    free(frame);
     rename("/tmp/ec-frame.tmp", "/tmp/ec-frame");
   }
   if (fd >= 0) close(fd);

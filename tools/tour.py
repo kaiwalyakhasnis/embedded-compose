@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """A scripted tour of the demo app, recorded as a GIF with real frame timing.
 
-  ./ec record <board> [out.gif]       emulated boards (boots it headless)
+  ./ec record <board> [out.gif] [seconds]   emulated boards (boots it headless);
+                                            with seconds: just watch, no tour
   boards/nexus5x/phone.py tour out.gif  the phone (over its dev USB link)
 
 The tour finds its targets by test tag, so it runs on any screen size.
@@ -91,7 +92,7 @@ class Emulated:
             time.sleep(0.05)
 
 
-def record_emulated(run, out, gif):
+def record_emulated(run, out, gif, seconds=None, width=360):
     for stale in ("console.log", "qmp.sock"):
         if os.path.exists(os.path.join(out, stale)):
             os.remove(os.path.join(out, stale))
@@ -106,10 +107,13 @@ def record_emulated(run, out, gif):
         d = Emulated(out)
         t = threading.Thread(target=d.capture, daemon=True)
         t.start()
-        tour(d)
+        if seconds:
+            time.sleep(seconds)   # just watch: any app
+        else:
+            tour(d)
         d.stop.set()
         t.join()
-        make_gif(d.frames, gif)
+        make_gif(d.frames, gif, width)
     finally:
         os.killpg(qemu.pid, signal.SIGTERM)
         qemu.wait()
@@ -119,6 +123,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--seconds", type=float, help="record this long without input instead of the demo tour")
+    ap.add_argument("--width", type=int, default=int(os.environ.get("GIF_WIDTH", 360)))
     ap.add_argument("gif")
     a = ap.parse_args()
-    record_emulated(a.run, a.out, a.gif)
+    record_emulated(a.run, a.out, a.gif, a.seconds, a.width)

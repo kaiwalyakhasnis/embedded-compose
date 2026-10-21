@@ -283,6 +283,10 @@ class DrawScope internal constructor(private val originX: Int, private val origi
     fun drawText(text: String, topLeft: Offset, color: Color, scale: Int = 1, bold: Boolean = false) =
         TextRenderer.draw(text, originX + topLeft.x.roundToInt(), originY + topLeft.y.roundToInt(), color, scale, bold)
 
+    /** Size of [text] in the display font at [scale]. */
+    fun measureText(text: String, scale: Int = 1): Size =
+        TextRenderer.measure(text, scale).let { Size(it.width.toFloat(), it.height.toFloat()) }
+
     fun drawImage(image: ImageBitmap, topLeft: Offset = Offset.Zero) =
         ec_image_draw(image.handle, originX + topLeft.x.roundToInt(), originY + topLeft.y.roundToInt())
 

@@ -62,6 +62,48 @@ A test "PASS" means: no crash or restart, memory flat, and after a long run
 of random taps, drags and keys, a replayed sequence gives a pixel-identical
 screen.
 
+## Second app: a Compose charging screen
+
+<p align="center"><img src="docs/charger-nexus5x.gif" width="270" alt="Compose charging animation on a Nexus 5X"></p>
+
+<sub>Recorded from the Nexus 5X's framebuffer, with the simulated battery to show a whole charge cycle.</sub>
+
+`apps/charger` replaces Android's off-mode charging screen (`/sbin/charger`).
+A glass orb fills with liquid (two waves, rising bubbles). Around it, a
+glowing ring with a spark at its tip and an orbiting comet. Below, the level
+in seven-segment digits, a pulsing bolt with energy flowing in, and the
+current, voltage and temperature. Colour follows the level, from red to
+green. It also does the stock charger's other jobs: it reads
+`/sys/class/power_supply`, turns the screen off after 30 s and wakes on
+touch or key, powers off 10 s after unplugging, and boots Android when
+Power is held for 3 s.
+
+On the phone it renders at ~30 fps (33 ms per frame). Large areas use
+opaque, pre-mixed colours, because minui draws straight into uncached
+framebuffer memory, where every translucent pixel costs a slow read.
+
+```sh
+APP=charger ./ec build qemu-virt && ./ec run qemu-virt     # simulated battery: Up/Down, Enter = plug
+APP=charger ./ec build nexus5x && ./ec run nexus5x         # real battery, our minimal system
+```
+
+**In LineageOS's real off-mode charging**, tested on the Nexus 5X:
+`boards/nexus5x/lineage-charger.py` makes a patched **copy** of a LineageOS 15.1
+`boot.img`. It replaces `/sbin/charger`, adds the font, and sets the app's
+environment in the `charger` service. With `--charger-mode` it also adds
+`androidboot.mode=charger`, so a `fastboot boot` goes straight into
+charging mode, RAM only:
+
+```sh
+APP=charger ./ec build nexus5x
+boards/nexus5x/lineage-charger.py lineage/boot.img out/nexus5x/native/embedded-compose boot-charger.img --charger-mode
+fastboot boot boot-charger.img      # hold Power 3 s: boots LineageOS
+```
+
+Without `--charger-mode`, the image is meant for flashing to `boot`, so it
+shows up whenever the phone is charged while off. That's your decision to
+make; nothing here flashes.
+
 ## Try it
 
 **Prebuilt:** [Releases](https://github.com/kaiwalyakhasnis/embedded-compose/releases) has a
@@ -125,6 +167,7 @@ Compose UI.
 ```
 ec                 build/run/test driver (./ec help)
 apps/demo/         the demo app
+apps/charger/      off-mode charging screen (APP=charger)
 core/ui/           toolkit (Kotlin)          core/hal/  platform contract (C)
 backends/          linux/ (evdev, clock, main), minui/ (display)
 boards/            qemu-virt/, nexus5x/, nexus5x-qemu/: everything device-specific

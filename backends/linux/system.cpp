@@ -4,6 +4,7 @@
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <sys/reboot.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -27,6 +28,12 @@ long ec_rss_kb(void) {
   if (fscanf(f, "%ld %ld", &pages, &rss) != 2) rss = -1;
   fclose(f);
   return rss < 0 ? -1 : rss * (sysconf(_SC_PAGESIZE) / 1024);
+}
+
+void ec_power_off(void) {
+  ec_log("powering off");
+  sync();
+  reboot(RB_POWER_OFF);
 }
 
 // The program itself is Kotlin: the app's Main.kt exports ec_app_main.

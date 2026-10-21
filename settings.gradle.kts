@@ -13,3 +13,4 @@ dependencyResolutionManagement {
 rootProject.name = "embedded-compose"
 include(":core:ui")   // the toolkit (board-independent)
 include(":apps:demo") // an app: a static library exporting ec_app_main
+include(":apps:charger") // the off-mode charging screen (APP=charger)

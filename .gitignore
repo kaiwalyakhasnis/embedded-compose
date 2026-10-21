@@ -7,3 +7,5 @@
 /local.env
 /boards/*/local.env
 __pycache__/
+# Raw recordings (videos); GIFs made from them go in docs/
+/media/
