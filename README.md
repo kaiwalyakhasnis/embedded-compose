@@ -100,10 +100,6 @@ boards/nexus5x/lineage-charger.py lineage/boot.img out/nexus5x/native/embedded-c
 fastboot boot boot-charger.img      # hold Power 3 s: boots LineageOS
 ```
 
-Without `--charger-mode`, the image is meant for flashing to `boot`, so it
-shows up whenever the phone is charged while off. That's your decision to
-make; nothing here flashes.
-
 ## Try it
 
 **Prebuilt:** [Releases](https://github.com/kaiwalyakhasnis/embedded-compose/releases) has a
