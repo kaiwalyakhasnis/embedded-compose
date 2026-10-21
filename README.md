@@ -1,6 +1,6 @@
 # embedded-compose
 
-Jetpack Compose's runtime on bare embedded Linux. There is no Android
+Jetpack Compose's UI on bare embedded Linux. There is no Android
 framework, no JVM and **no Skia**: the UI is drawn straight into the kernel's
 display device, **fbdev or DRM, whichever the device has**. The whole UI is
 one ~3 MB static binary that boots from a 2.4 MB initramfs.
