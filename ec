@@ -10,7 +10,9 @@
 #   ./ec package <board>            standalone release archive in out/<board>/
 #   ./ec clean [<board>]            delete out/<board> (or all of out/)
 #
-# Environment: APP=<name> (apps/<name>, default demo), HEADLESS=1, TRACE=1,
+# Environment: APP=<name> (apps/<name>, default demo), or APP_DIR=<dir> for an
+# app kept outside this repo (named after its directory; output in
+# out/<board>-<name>/), HEADLESS=1, TRACE=1,
 # JOBS=<n>, EC_ENV_EXTRA="NAME=value ..." (added to the app's environment).
 # Machine-specific paths go in boards/<board>/local.env (not in git).
 set -e
@@ -20,6 +22,11 @@ EC_ROOT=$(cd "$(dirname "$0")" && pwd)
 . "$EC_ROOT/tools/lib/qemu.sh"
 
 APP=${APP:-demo}
+if [ -n "$APP_DIR" ]; then
+  APP_DIR=$(cd "$APP_DIR" && pwd) || exit 1
+  APP=$(basename "$APP_DIR")
+  export APP_DIR   # settings.gradle.kts includes it as :apps:<name>
+fi
 
 usage() { sed -n '2,16s/^# \{0,1\}//p' "$0"; exit "${1:-0}"; }
 
@@ -30,6 +37,7 @@ load_board() {
   BOARD_DIR=$EC_ROOT/boards/$BOARD
   [ -f "$BOARD_DIR/board.sh" ] || die "no board '$BOARD' (see ./ec boards)"
   BOARD_OUT=$EC_OUT/$BOARD
+  [ -n "$APP_DIR" ] && BOARD_OUT=$EC_OUT/$BOARD-$APP   # keep the in-tree apps' images
   BOARD_EMULATED=
   BACKEND_FLAGS= EC_ENV= BOARD_INIT=
   [ -f "$EC_ROOT/local.env" ] && . "$EC_ROOT/local.env"
@@ -39,9 +47,9 @@ load_board() {
     eval "[ -n \"\$$v\" ]" || die "boards/$BOARD/board.sh does not set $v"
   done
   . "$EC_ROOT/backends/$BACKEND/rootfs.sh"
-  APP_DIR=$EC_ROOT/apps/$APP
+  [ -n "$APP_DIR" ] || APP_DIR=$EC_ROOT/apps/$APP
   [ -d "$APP_DIR" ] || die "no app '$APP' in apps/"
-  APP_IMAGES=
+  APP_IMAGES= APP_NATIVE=
   [ -f "$APP_DIR/app.env" ] && . "$APP_DIR/app.env"
   mkdir -p "$BOARD_OUT"
 }
@@ -61,7 +69,7 @@ build_binary() {
   note "binary ($BACKEND backend${BACKEND_FLAGS:+, $BACKEND_FLAGS})"
   make -f "$EC_ROOT/backends/Makefile" -j"$JOBS" --no-print-directory -s \
     BACKEND="$BACKEND" CROSS="$(cross_for "$ARCH")" KLIB="$KLIB" OUT="$BOARD_OUT/native" \
-    BACKEND_FLAGS="$BACKEND_FLAGS"
+    BACKEND_FLAGS="$BACKEND_FLAGS" APP_SRCS="$(for s in $APP_NATIVE; do printf '%s ' "$APP_DIR/$s"; done)"
   APP_BIN=$BOARD_OUT/native/embedded-compose
 }
 
@@ -96,7 +104,7 @@ cmd_build() {
   build_binary
   build_initramfs
   board_image
-  note "done: $(ls -l "$APP_BIN" | awk '{print $5}') byte binary; image in out/$BOARD/"
+  note "done: $(ls -l "$APP_BIN" | awk '{print $5}') byte binary; image in ${BOARD_OUT#"$EC_ROOT"/}/"
 }
 
 cmd_run() {
