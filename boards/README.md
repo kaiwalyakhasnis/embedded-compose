@@ -13,7 +13,7 @@ Variables:
 |---|---|
 | `BOARD_DESC` | one line for `./ec boards` |
 | `ARCH` | `arm64` (selects the cross compiler and the Kotlin/Native target) |
-| `BACKEND` | display backend: a directory under `backends/` (`minui`; for LED matrices `hub75`) |
+| `BACKEND` | display backend: a directory under `backends/` (`minui`; for LED matrices `hub75` or `max7219`) |
 | `BACKEND_FLAGS` | backend build flags, e.g. minui's pixel format (`-DRECOVERY_BGRA`) |
 | `DENSITY` | pixels per dp (420 dpi phone: 2.625; LED matrix: 1) |
 | `FONT` | minui font: `12x22` or `18x32` (`third_party/aosp/bootable/recovery/fonts`); LED-matrix backends: `5x7` (built in) |
@@ -72,6 +72,7 @@ Settings `/init` and the app understand (through `EC_ENV`):
 | `EC_TRACE=1` | log frames, input, clicks and test-tag bounds (QEMU boards: `TRACE=1`) |
 | `EC_DEV_CAPTURE=1` | dev: on request, copy the frame just shown to `/tmp/ec-frame` (minui) or `/tmp/ec-frame.ppm` (LED matrices), for tear-free screen capture |
 | `EC_HUB75='<flags>'` | hub75: panel and wiring, as rpi-rgb-led-matrix's `--led-` flags |
+| `EC_MAX7219='<settings>'` | max7219: SPI device, number of modules, brightness, orientation (`backends/max7219/max7219.cpp`) |
 
 ## Adding a board
 
@@ -92,6 +93,6 @@ A display that minui can't drive (an SPI panel with RGB565, an LED matrix) is
 a new backend under `backends/`, not a board change. It implements the display
 half of `core/hal/ec_hal.h` and reuses `backends/linux`. `backends/matrix`
 is one: it draws into a buffer in RAM, and a small sink shows it
-(`backends/hub75`). A backend's `backend.sh` lists its
+(`backends/hub75`, `backends/max7219`). A backend's `backend.sh` lists its
 root filesystem files. It can also build what it links: `backend_make_vars`
 prints extra `make` variables, as hub75 does for its library.

@@ -1,5 +1,5 @@
 # LED matrices: the display half of ec_hal.h on an RGB buffer in RAM
-# (matrix.cpp), shown by a sink in the including backend (hub75).
+# (matrix.cpp), shown by a sink in the including backend (hub75, max7219).
 # PNGs are decoded with the vendored libpng (backends/aosp.mk).
 include $(ROOT)/backends/aosp.mk
 

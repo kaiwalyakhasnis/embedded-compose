@@ -1,4 +1,4 @@
-# Shared by the LED-matrix backends' backend.sh (hub75).
+# Shared by the LED-matrix backends' backend.sh (hub75, max7219).
 #
 # backend_rootfs: the app's PNGs in /res/images (apps/<app>/app.env:
 # APP_IMAGES). The font is built in: FONT must be 5x7.

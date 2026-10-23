@@ -34,7 +34,11 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 // The pages. Everything is drawn LED by LED (1x1 rects) or in the 5x7 font;
-// sizes are in LEDs, laid out for 64x32.
+// sizes are in LEDs, laid out for 64x32. Strips 8 LEDs high (MAX7219
+// modules, 32x8) get a layout of their own: one line of text.
+
+/** 8 LEDs high, room for one line of the 5x7 font. */
+private fun DrawScope.isStrip() = size.height < 16
 
 /** A colour from a hue (0..1, wrapping) at full saturation, and a brightness. */
 internal fun hue(h: Float, v: Float = 1f): Color {
@@ -85,7 +89,10 @@ private val CLOCK_THEMES = listOf(
     Color(0xffea80fc) to Color(0xff18ffff),
 )
 
-/** HH:MM, the date, and a bar of the minute's seconds. Redraws once a second. */
+/**
+ * HH:MM, the date, and a bar of the minute's seconds. On a strip: HH:MM and
+ * the seconds as a line under it. Redraws once a second.
+ */
 @Composable
 internal fun ClockPage(style: Int) {
     var now by remember { mutableStateOf(wallTime()) }
@@ -100,6 +107,11 @@ internal fun ClockPage(style: Int) {
         val n = now
         val time = n.hour.toString().padStart(2, '0') + (if (n.second % 2 == 0) ":" else " ") +
             n.minute.toString().padStart(2, '0')
+        if (isStrip()) {
+            drawText(time, Offset(centeredX(time, 1), 0f), main)
+            drawRect(accent, Offset(0f, size.height - 1), Size(((n.second + 1) * size.width / 60).toInt().toFloat(), 1f))
+            return@Canvas
+        }
         drawText(time, Offset(centeredX(time, 2), 2f), main, scale = 2)
         val date = "${DAYS[n.weekday]} ${n.day} ${MONTHS[n.month]}"
         drawText(date, Offset(centeredX(date, 1), 19f), accent)
@@ -127,11 +139,16 @@ private val PALETTES = listOf(
     { gradient(0xff12002a, 0xff7b1fa2, 0xffff2e88, 0xffffb000, 0xffff2e88, 0xff7b1fa2, 0xff12002a) },
 )
 
-/** Four sine fields summed per LED, through a cycling palette. Every frame. */
+/**
+ * Four sine fields summed per LED, through a cycling palette. Every frame.
+ * Strips start with the second palette: they are often one colour, where
+ * the rainbow's every LED is bright enough to be lit.
+ */
 @Composable
 internal fun PlasmaPage(style: Int) {
     val millis by rememberFrameMillis(true)
-    val palette = remember(style) { PALETTES[style % PALETTES.size]() }
+    val first = if (Device.height < 16) 1 else 0
+    val palette = remember(style) { PALETTES[(style + first) % PALETTES.size]() }
     Canvas(Modifier.fillMaxSize()) {
         val t = millis / 1000f
         val w = size.width.toInt()
@@ -204,9 +221,9 @@ internal fun LifePage(style: Int) {
 
 // ---------------------------------------------------------------- marquee
 
-private const val MESSAGE = "Jetpack Compose runtime on a HUB75 LED matrix * no Android, no JVM * "
+private const val MESSAGE = "Jetpack Compose runtime on an LED matrix * no Android, no JVM * "
 
-/** The message in rainbow letters between two waves. Enter: faster. */
+/** The message in rainbow letters between two waves; on a strip, small and alone. Enter: faster. */
 @Composable
 internal fun MarqueePage(style: Int) {
     val millis by rememberFrameMillis(true)
@@ -214,18 +231,21 @@ internal fun MarqueePage(style: Int) {
         val t = millis / 1000f
         val w = size.width.toInt()
         val h = size.height.toInt()
-        val cell = 12  // a 6-pixel cell at scale 2
+        val strip = isStrip()
+        val scale = if (strip) 1 else 2
+        val cell = 6 * scale  // the font's 6-pixel cell
         val total = MESSAGE.length * cell
         val speed = if (style % 2 == 0) 20f else 45f  // LEDs per second
         val start = -((t * speed).toInt() % total)
-        val y = (h - 14) / 2f
+        val y = ((h - 7 * scale) / 2).toFloat()
         for (copy in 0..1) {
             for (i in MESSAGE.indices) {
                 val x = start + copy * total + i * cell
                 if (x >= w || x + cell <= 0) continue
-                drawText(MESSAGE[i].toString(), Offset(x.toFloat(), y), hue(i * 0.04f - t * 0.25f), scale = 2)
+                drawText(MESSAGE[i].toString(), Offset(x.toFloat(), y), hue(i * 0.04f - t * 0.25f), scale = scale)
             }
         }
+        if (strip) return@Canvas
         for (x in 0 until w) {
             val a = sin(x / 5f + t * 4f) * 2f
             val c = hue(x / w.toFloat() + t * 0.1f, 0.6f)

@@ -24,7 +24,7 @@ panel, and reads touch and keys from evdev.
 androidx.compose.runtime                   Recomposer, snapshots, frame clock (official artifact)
 toolkit                 core/ui            LayoutNode tree, Box/Row/Column/Text/Canvas/Button, Modifiers
 platform contract       core/hal/ec_hal.h  fill, text, image, flip, input events, clock (C)
-backend                 backends/          minui (fbdev/DRM/ADF), matrix + hub75 (LED panels)
+backend                 backends/          minui (fbdev/DRM/ADF), matrix + hub75/max7219 (LED panels)
 kernel                  /dev/fb0, DRM, GPIO, /dev/input/event*
 ```
 
@@ -51,6 +51,7 @@ On the Nexus 5X the demo uses 7 MB of RAM idle and ~12 MB animating, at
 | [`nexus5x-qemu`](boards/nexus5x-qemu/README.md) | the phone's 3.10 kernel on QEMU | UI test PASS |
 | [`qemu-virt`](boards/qemu-virt/README.md) | generic arm64 QEMU, mainline Linux 6.12 | UI test PASS |
 | [`rpi-hub75`](boards/rpi-hub75/README.md) | Raspberry Pi + HUB75 LED panel, on Raspberry Pi OS | builds; not yet tried on hardware |
+| [`rpi-max7219`](boards/rpi-max7219/README.md) | Raspberry Pi + MAX7219 LED modules (32x8), on Raspberry Pi OS | builds; runs against an emulated chain; not yet tried on hardware |
 | [`qemu-rpi3`](boards/qemu-rpi3/README.md) | the rpi-hub75 build on QEMU's Raspberry Pi 3, no panel | driver runs |
 
 ## Apps
@@ -115,7 +116,7 @@ ec                 build/run/test driver (./ec help)
 apps/              demo/, charger/, matrix/
 core/ui/           toolkit (Kotlin)          core/hal/  platform contract (C)
 backends/          linux/ (evdev, clock, main), minui/ (display),
-                   matrix/ (LED panels) with hub75/ (Raspberry Pi)
+                   matrix/ (LED panels) with hub75/ and max7219/ (Raspberry Pi)
 boards/            one directory per device: everything device-specific
 tools/             init, cpio writer, QEMU launcher, UI test, GIF tour, bundle scripts
 third_party/aosp/  minui + libpng/zlib/libdrm from AOSP android-8.1.0_r52, unmodified

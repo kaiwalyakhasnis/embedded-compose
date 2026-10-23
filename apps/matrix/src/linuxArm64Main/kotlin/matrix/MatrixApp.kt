@@ -73,7 +73,10 @@ internal fun MatrixApp() {
     }
 }
 
-/** Which page this is, as dots along the bottom edge, for 1.5 s after a change. */
+/**
+ * Which page this is, as dots along the bottom edge, for 1.5 s after a
+ * change, on black one LED around (on a strip 8 LEDs high: only beside).
+ */
 @Composable
 private fun PageDots(page: Int, count: Int) {
     var visible by remember { mutableStateOf(true) }
@@ -86,7 +89,8 @@ private fun PageDots(page: Int, count: Int) {
     Canvas(Modifier.fillMaxSize()) {
         val x0 = ((size.width - (count * 3 - 1)) / 2).toInt().toFloat()
         val y = size.height - 1
-        drawRect(Color.Black, Offset(x0 - 1, y - 1), Size(count * 3 + 1f, 2f))
+        val margin = if (size.height < 16) 0f else 1f
+        drawRect(Color.Black, Offset(x0 - 1, y - margin), Size(count * 3 + 1f, 1f + margin))
         for (i in 0 until count) {
             drawRect(if (i == page) Color.White else Color(0xff3a3a3a), Offset(x0 + i * 3, y), Size(2f, 1f))
         }

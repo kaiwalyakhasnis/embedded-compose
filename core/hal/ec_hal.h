@@ -5,7 +5,8 @@
 //                     -- shared by every Linux backend
 //   backends/minui/   display, font and images on AOSP recovery's minui
 //   backends/matrix/  the same for LED matrices, shown by backends/hub75/
-//                     (HUB75 panels on a Raspberry Pi)
+//                     (HUB75 panels on a Raspberry Pi) or backends/max7219/
+//                     (MAX7219 modules on a Raspberry Pi's SPI)
 //
 // A new display (an SPI panel, a DRM-only path, ...) is another directory
 // under backends/ implementing the "display" part below.

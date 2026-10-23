@@ -1,7 +1,7 @@
 // LED matrices: backends/matrix/matrix.cpp implements the display half of
 // ec_hal.h on an RGB pixel buffer in RAM, one byte per channel. A sink
 // shows that buffer on a panel: backends/hub75 (HUB75 panels on a
-// Raspberry Pi).
+// Raspberry Pi), backends/max7219 (MAX7219 modules on a Raspberry Pi's SPI).
 #ifndef EC_MATRIX_H
 #define EC_MATRIX_H
 
