@@ -1,6 +1,6 @@
 # rpi-max7219: MAX7219 LED modules on a Raspberry Pi
 
-<img src="../../docs/max7219-pages.png" width="420" alt="The matrix app's four pages on a 32x8 MAX7219 strip" align="right">
+<a href="../../docs/max7219-pi3.mp4"><img src="../../docs/max7219-pi3.gif" width="360" alt="A Compose test app on a 32x8 MAX7219 board driven by a Raspberry Pi 3" align="right"></a>
 
 A "4 in 1" MAX7219 dot-matrix board (four 8x8 single-colour matrices,
 32x8 LEDs, often sold as FC-16) on a Raspberry Pi's SPI pins, running the
@@ -15,9 +15,13 @@ app's colour is bright (its brightest channel at least `threshold`, 128 by
 default), so any colour on black shows and dark greys don't. Brightness is
 one setting for the whole board.
 
-**Status:** builds. The picture shows the SPI bytes the binary sent,
-decoded as a chain of four MAX7219s would. **Not yet tried on a real Pi
-and module.**
+**Status:** runs on a Raspberry Pi 3 (Raspberry Pi OS 64-bit) with a 4-in-1
+FC-16 board, with the default settings. The video shows the playground's
+*LED test* example there: every LED, the module numbers 1 to 4 (upright, left
+to right), an arrow, sweeping lines and scrolling text. The matrix app's
+pages on 32x8, decoded from the SPI bytes it sends (not yet filmed):
+
+<img src="../../docs/max7219-pages.png" width="420" alt="The matrix app's four pages on a 32x8 MAX7219 strip">
 
 ## Hardware
 

@@ -5,15 +5,17 @@ framework, no JVM and no Skia: the UI is one ~3 MB static binary that draws
 straight into the kernel's display device (fbdev or DRM) or onto an LED
 panel, and reads touch and keys from evdev.
 
-| [Nexus 5X](boards/nexus5x/README.md) | [Nexus 5X kernel on QEMU](boards/nexus5x-qemu/README.md) | [Generic arm64 QEMU](boards/qemu-virt/README.md) |
-|:---:|:---:|:---:|
-| <img src="docs/nexus5x.gif" width="240" alt="Demo on a Nexus 5X"> | <img src="docs/nexus5x-qemu.gif" width="240" alt="Demo on the Nexus 5X kernel in QEMU"> | <img src="docs/qemu-virt.gif" width="240" alt="Demo on QEMU virt with mainline Linux"> |
-| the demo, captured from the phone | the phone's kernel, 1080x1920 | mainline Linux, 720x1280 |
+<p align="center">
+  <a href="docs/max7219-pi3.mp4"><img src="docs/max7219-pi3.gif" width="480" alt="A Compose test app on a 32x8 MAX7219 LED board driven by a Raspberry Pi 3: every LED, module numbers 1 to 4, an arrow, sweeping lines and scrolling text"></a><br>
+  <sub>A Compose app on a 4-in-1 MAX7219 LED board (32x8), driven by a Raspberry Pi 3
+  (<a href="boards/rpi-max7219/README.md">rpi-max7219</a>). It is the playground's <i>LED test</i>
+  example. <a href="docs/max7219-pi3.mp4">Video</a></sub>
+</p>
 
-| [Charging screen on the Nexus 5X](apps/charger/README.md) | [HUB75 LED panel on a Raspberry Pi](boards/rpi-hub75/README.md) |
-|:---:|:---:|
-| <img src="docs/charger-nexus5x.gif" width="200" alt="Compose charging animation on a Nexus 5X"> | <img src="docs/hub75-qemu-rpi3.png" width="420" alt="The matrix app's four pages on a 64x32 LED matrix"> |
-| replaces Android's off-mode charger | 64x32 matrix; shown here from [QEMU's Pi 3](boards/qemu-rpi3/README.md) |
+| [Nexus 5X](boards/nexus5x/README.md) | [Generic arm64 QEMU](boards/qemu-virt/README.md) | [HUB75 LED panel on a Raspberry Pi](boards/rpi-hub75/README.md) |
+|:---:|:---:|:---:|
+| <img src="docs/nexus5x.gif" width="240" alt="Demo on a Nexus 5X"> | <img src="docs/qemu-virt.gif" width="240" alt="Demo on QEMU virt with mainline Linux"> | <img src="docs/hub75-qemu-rpi3.png" width="320" alt="The matrix app's four pages on a 64x32 LED matrix"> |
+| the demo, captured from the phone | mainline Linux, 720x1280 | 64x32 matrix; shown here from [QEMU's Pi 3](boards/qemu-rpi3/README.md) |
 
 <sub>QEMU recordings run at emulator speed, not the device's.</sub>
 
@@ -51,7 +53,7 @@ On the Nexus 5X the demo uses 7 MB of RAM idle and ~12 MB animating, at
 | [`nexus5x-qemu`](boards/nexus5x-qemu/README.md) | the phone's 3.10 kernel on QEMU | UI test PASS |
 | [`qemu-virt`](boards/qemu-virt/README.md) | generic arm64 QEMU, mainline Linux 6.12 | UI test PASS |
 | [`rpi-hub75`](boards/rpi-hub75/README.md) | Raspberry Pi + HUB75 LED panel, on Raspberry Pi OS | builds; not yet tried on hardware |
-| [`rpi-max7219`](boards/rpi-max7219/README.md) | Raspberry Pi + MAX7219 LED modules (32x8), on Raspberry Pi OS | builds; runs against an emulated chain; not yet tried on hardware |
+| [`rpi-max7219`](boards/rpi-max7219/README.md) | Raspberry Pi + MAX7219 LED modules (32x8), on Raspberry Pi OS | runs on a Raspberry Pi 3 |
 | [`qemu-rpi3`](boards/qemu-rpi3/README.md) | the rpi-hub75 build on QEMU's Raspberry Pi 3, no panel | driver runs |
 
 ## Apps
