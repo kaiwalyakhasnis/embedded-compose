@@ -85,6 +85,8 @@ Copy the closest board. A new Linux device usually needs only:
 3. `DENSITY` and `FONT` for its screen.
 4. `board_image`/`board_run` for how it boots: QEMU, `fastboot boot`, an SD
    card image, a copy over ssh, ...
+5. A `README.md` for the board's users: what it is, how to run it, what was
+   tested. Add it to the boards table in the main README.
 
 A display that minui can't drive (an SPI panel with RGB565, an LED matrix) is
 a new backend under `backends/`, not a board change. It implements the display
