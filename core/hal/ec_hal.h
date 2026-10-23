@@ -4,9 +4,11 @@
 //   backends/linux/   input (evdev), clock, logging, memory stats, main()
 //                     -- shared by every Linux backend
 //   backends/minui/   display, font and images on AOSP recovery's minui
+//   backends/matrix/  the same for LED matrices, shown by backends/hub75/
+//                     (HUB75 panels on a Raspberry Pi)
 //
-// A new display (an LED-matrix driver, a DRM-only path, ...) is another
-// directory under backends/ implementing the "display" part below.
+// A new display (an SPI panel, a DRM-only path, ...) is another directory
+// under backends/ implementing the "display" part below.
 #ifndef EC_HAL_H
 #define EC_HAL_H
 

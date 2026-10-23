@@ -57,6 +57,8 @@ Measured on the Nexus 5X (Snapdragon 808, 1080x1920) running the demo:
 | **LG Nexus 5X**, physical | `fastboot boot` (RAM only, nothing flashed), LineageOS 15.1 kernel 3.10 | runs. Touch, keys and animation work, and the GIF above was captured from it |
 | `nexus5x-qemu` | the phone's 3.10 kernel on QEMU, 1080x1920 | 10 min random input + 3 min animation: PASS |
 | `qemu-virt` | mainline Linux 6.12 on QEMU, virtio-gpu, 720x1280 | 10 min random input + 3 min animation: PASS |
+| `qemu-rpi3` | the HUB75 build on QEMU's Raspberry Pi 3 model, no panel | the driver starts, frames swap, keys arrive, SIGTERM turns the panel off |
+| `rpi-hub75`, a real Pi + panel | Raspberry Pi OS, over ssh | builds; **not yet tried on hardware** |
 
 A test "PASS" means: no crash or restart, memory flat, and after a long run
 of random taps, drags and keys, a replayed sequence gives a pixel-identical
@@ -100,11 +102,50 @@ boards/nexus5x/lineage-charger.py lineage/boot.img out/nexus5x/native/embedded-c
 fastboot boot boot-charger.img      # hold Power 3 s: boots LineageOS
 ```
 
+## LED matrices: HUB75 panels on a Raspberry Pi
+
+<p align="center"><img src="docs/hub75-qemu-rpi3.png" width="640" alt="The matrix app's four pages, as frames given to rpi-rgb-led-matrix on QEMU's Raspberry Pi 3"></p>
+
+<sub>The HUB75 build on QEMU's Raspberry Pi 3 (`qemu-rpi3`): the frames the app handed to
+rpi-rgb-led-matrix, as its console prints them. Clock, plasma, Game of Life and a scrolling
+message, one pixel per LED. Not yet photographed on a real panel.</sub>
+
+The same toolkit and runtime also drive a 64x32 RGB LED panel (HUB75)
+wired to a Raspberry Pi's GPIO header. The backend for it, `backends/hub75`,
+draws each frame into a buffer in RAM. It hands the frame to
+[rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix), whose
+real-time thread refreshes the panel, and swaps it in at the panel's
+vertical sync. Text uses a built-in 5x7 font. The app, `apps/matrix`, has
+four pages: a clock, a plasma, Game of Life and a scrolling message. Two
+boards cover it:
+
+| Board | What runs | Use it for |
+|---|---|---|
+| `qemu-rpi3` | the real HUB75 build on QEMU's Raspberry Pi 3 model, driving emulated GPIO; no panel | the driver path: init, refresh thread, vsync swaps, clean shutdown. The console shows the GPIO levels and the frame as coloured text |
+| `rpi-hub75` | Raspberry Pi OS (64-bit) on a Pi 3, 4, 5 or Zero 2 W, with the panel | the real thing. `./ec run` copies a bundle over ssh and runs it; `./ec shot` fetches what the panel shows |
+
+```sh
+./ec build qemu-rpi3 && ./ec run qemu-rpi3
+echo 'PI=pi@raspberrypi.local' > boards/rpi-hub75/local.env
+./ec build rpi-hub75 && ./ec run rpi-hub75       # Ctrl-C stops it and turns the panel off
+```
+
+Panel and wiring are the library's own flags, e.g.
+`HUB75_FLAGS='--led-rows=32 --led-cols=64 --led-gpio-mapping=adafruit-hat'`
+in `boards/rpi-hub75/local.env`. On the Pi, turn the built-in audio off
+(`dtparam=audio=off` in `/boot/firmware/config.txt`): it shares the PWM
+hardware that times the panel, and the library refuses to start while it
+is loaded. The bundle's README covers the rest: Pi settings, buttons on
+GPIO, starting at boot. rpi-rgb-led-matrix is GPL-2.0.
+It is downloaded and built for the hub75 backend only, so that backend's
+binaries fall under the GPL.
+
 ## Try it
 
 **Prebuilt:** [Releases](https://github.com/kaiwalyakhasnis/embedded-compose/releases) has a
-`fastboot boot` image for the Nexus 5X and ready-to-run archives for both QEMU
-boards (`./run.sh`, needs only `qemu-system-arm`).
+`fastboot boot` image for the Nexus 5X, ready-to-run archives for the QEMU
+boards (`./run.sh`, needs only `qemu-system-arm`), and the Raspberry Pi
+HUB75 bundle (copy it to the Pi, then `./run.sh`).
 
 **From source.** Requirements (Ubuntu/Debian):
 
@@ -143,7 +184,8 @@ gives you the log, memory stats, screenshots and the GIF tour over USB.
 pixel format, density and font, and says how to boot it. See
 [boards/README.md](boards/README.md). A display that minui can't drive (a 16-bit
 SPI panel, an LED matrix) needs a new backend: implement the display half of
-`core/hal/ec_hal.h`.
+`core/hal/ec_hal.h`, as `backends/matrix` does for LED matrices (shown on
+HUB75 panels by `backends/hub75`).
 
 ## What the toolkit supports
 
@@ -164,13 +206,17 @@ Compose UI.
 ec                 build/run/test driver (./ec help)
 apps/demo/         the demo app
 apps/charger/      off-mode charging screen (APP=charger)
+apps/matrix/       for LED matrices, 64x32 and up (APP=matrix)
 core/ui/           toolkit (Kotlin)          core/hal/  platform contract (C)
-backends/          linux/ (evdev, clock, main), minui/ (display)
-boards/            qemu-virt/, nexus5x/, nexus5x-qemu/: everything device-specific
-tools/             init, cpio writer, QEMU launcher, UI test, GIF tour
+backends/          linux/ (evdev, clock, main), minui/ (display),
+                   matrix/ (LED matrices) with hub75/ (Raspberry Pi)
+boards/            qemu-virt/, nexus5x/, nexus5x-qemu/, rpi-hub75/, qemu-rpi3/:
+                   everything device-specific
+tools/             init, cpio writer, QEMU launcher, UI test, GIF tour, bundle scripts
 third_party/aosp/  minui + libpng/zlib/libdrm from AOSP android-8.1.0_r52, unmodified
 ```
 
 Third-party code keeps its own licences: AOSP sources under Apache 2.0 and
-their own notices (`third_party/aosp/`), and the fonts under OFL. Busybox and
-Linux are downloaded and built at build time, not included.
+their own notices (`third_party/aosp/`), and the fonts under OFL. Busybox,
+Linux and (for the hub75 backend only) rpi-rgb-led-matrix, GPL-2.0, are
+downloaded and built at build time, not included.

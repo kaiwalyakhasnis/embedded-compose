@@ -6,6 +6,8 @@
 #
 # backends/linux/linux.mk  : evdev input, clock, log, main() (every Linux backend)
 # backends/<BACKEND>/backend.mk : the display, plus whatever it needs to build
+#   (adds to OBJS, and to LIBS for prebuilt libraries; backend.sh's
+#   backend_make_vars can pass it more variables through ./ec)
 ROOT    := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))..)
 BACKEND ?= minui
 CROSS   ?= aarch64-linux-gnu-
@@ -22,6 +24,7 @@ COMMON   := -O2 -fPIC -ffunction-sections -fdata-sections -Wno-unused-parameter
 CFLAGS   := $(COMMON)
 CXXFLAGS := $(COMMON) -std=gnu++17
 OBJS     :=
+LIBS     :=
 
 all:
 
@@ -41,14 +44,20 @@ $(OUT)/app/$(basename $(notdir $(1))).o: $(1) $(HAL)/ec_hal.h
 endef
 $(foreach s,$(APP_SRCS),$(eval $(call app_rule,$(s))))
 
-$(BIN): $(OBJS) $(KLIB)
-	$(CXX) -static -Wl,--gc-sections -s -o $@ $(OBJS) $(KLIB) -lpthread -ldl -lm
+$(BIN): $(OBJS) $(KLIB) $(LIBS) $(OUT)/link
+	$(CXX) -static -Wl,--gc-sections -s -o $@ $(OBJS) $(KLIB) $(LIBS) -lpthread -ldl -lm
 
 # Board flags are part of the build: rebuild when they change.
 $(OUT)/flags: FORCE
 	@mkdir -p $(OUT)
 	@echo '$(CROSS) $(BACKEND_FLAGS)' | cmp -s - $@ || echo '$(CROSS) $(BACKEND_FLAGS)' > $@
 $(OBJS): $(OUT)/flags
+
+# So are the libraries linked: relink when another app's KLIB (an older
+# file) takes the place of the last one.
+$(OUT)/link: FORCE
+	@mkdir -p $(OUT)
+	@echo '$(KLIB) $(LIBS)' | cmp -s - $@ || echo '$(KLIB) $(LIBS)' > $@
 
 clean:
 	rm -rf $(OUT)

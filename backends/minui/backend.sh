@@ -1,4 +1,6 @@
-# What the minui backend needs in the root filesystem, as mkcpio list lines:
+# What ./ec needs to know about the minui backend (sourced with the board).
+#
+# backend_rootfs: its files in the root filesystem, as mkcpio list lines.
 # minui loads its font and every image from /res/images.
 #   FONT        board setting: 12x22 or 18x32 (AOSP recovery picks 18x32 for
 #               xxhdpi screens and 12x22 below)

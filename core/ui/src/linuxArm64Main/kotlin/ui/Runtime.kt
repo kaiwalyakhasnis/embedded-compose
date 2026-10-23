@@ -111,6 +111,8 @@ fun runApp(background: Color = Color.Black, content: @Composable () -> Unit): In
     }
     val width = ec_width()
     val height = ec_height()
+    Device.width = width
+    Device.height = height
     Density.scale = ec_density()
     log("screen ${width}x$height, density ${Density.scale}, input devices: ${ec_input_open()}")
 
@@ -200,6 +202,12 @@ object Device {
     var onKey: ((code: Int, value: Int) -> Unit)? = null
     /** Called for every input event of any kind (user activity). */
     var onInput: (() -> Unit)? = null
+
+    /** Screen size in pixels, set when [runApp] starts. */
+    var width = 0
+        internal set
+    var height = 0
+        internal set
 
     var screenOn = true
         private set

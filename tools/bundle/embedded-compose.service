@@ -1,0 +1,15 @@
+# Starts embedded-compose at boot, from /opt/embedded-compose. On the board,
+# in the bundle's directory:
+#   sudo mkdir -p /opt/embedded-compose && sudo cp -r . /opt/embedded-compose
+#   sudo cp embedded-compose.service /etc/systemd/system/
+#   sudo systemctl enable --now embedded-compose
+[Unit]
+Description=embedded-compose app
+
+[Service]
+ExecStart=/opt/embedded-compose/run.sh
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
