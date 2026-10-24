@@ -57,6 +57,18 @@ at `intensity` above ~8 with many LEDs lit, use a separate 5 V supply
 
 ## Run it
 
+**Prebuilt:** copy `embedded-compose-rpi-max7219.tar.gz` (the matrix app)
+or `embedded-compose-rpi-max7219-ledtest.tar.gz` (the LED test in the video,
+its source included) from
+[Releases](https://github.com/kaiwalyakhasnis/embedded-compose/releases)
+to the Pi:
+
+```sh
+tar xzf embedded-compose-rpi-max7219.tar.gz && cd embedded-compose-rpi-max7219
+nano ec.env      # EC_MAX7219: only if you need other settings (below)
+./run.sh         # as root (asks for sudo); Ctrl-C stops it and turns the LEDs off
+```
+
 **From source**, deployed from your PC. In `boards/rpi-max7219/local.env`:
 
 ```sh
