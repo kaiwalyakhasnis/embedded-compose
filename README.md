@@ -24,7 +24,7 @@ panel, and reads touch and keys from evdev.
 ```
 @Composable UI          apps/<app>         remember, mutableStateOf, LaunchedEffect, ...
 androidx.compose.runtime                   Recomposer, snapshots, frame clock (official artifact)
-toolkit                 core/ui            LayoutNode tree, Box/Row/Column/Text/Canvas/Button, Modifiers
+toolkit                 core/ui            LayoutNode tree, Box/Row/Column/Text/Canvas/Button, Modifiers, ui.led
 platform contract       core/hal/ec_hal.h  fill, text, image, flip, input events, clock (C)
 backend                 backends/          minui (fbdev/DRM/ADF), matrix + hub75/max7219 (LED panels)
 kernel                  /dev/fb0, DRM, GPIO, /dev/input/event*
@@ -107,6 +107,15 @@ round rects, circles, ovals, lines, polygons and arcs, filled or stroked,
 with alpha. The whole Compose runtime is available: state, effects,
 `withFrameNanos`, `animateFloatAsState`.
 
+For small LED panels (`ui.led`, in `core/ui`): `Marquee` (scrolling text,
+once across or round and round), `FitOrScroll` (still if it fits, else
+scrolling), `LedIcon` with `LedIcons` and your own `ledBitmap("..#.. .###.")`,
+`SmallText` (a 3x5 font: `12:34:56` fits on 32 LEDs), `BarGraph`,
+`ProgressBar`, `Blink`, `PageDots` and `SlideTransition`. They work on any
+board; sizes are in pixels or dp, so on the phone they want a `scale`.
+The [LED matrix playground](https://kaiwalyakhasnis.github.io/embedded-compose-led-matrix-playground/)'s
+*LED components* example shows each one, in the browser.
+
 Not yet: scrolling, clipping, text input, scalable fonts, transforms,
 Material components. This is Compose's runtime with a small toolkit, not
 Compose UI.
@@ -116,7 +125,7 @@ Compose UI.
 ```
 ec                 build/run/test driver (./ec help)
 apps/              demo/, charger/, matrix/
-core/ui/           toolkit (Kotlin)          core/hal/  platform contract (C)
+core/ui/           toolkit (Kotlin), ui/led  core/hal/  platform contract (C)
 backends/          linux/ (evdev, clock, main), minui/ (display),
                    matrix/ (LED panels) with hub75/ and max7219/ (Raspberry Pi)
 boards/            one directory per device: everything device-specific

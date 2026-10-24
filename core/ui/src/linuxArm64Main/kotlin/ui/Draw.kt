@@ -195,7 +195,7 @@ internal object Raster {
 // --------------------------------------------------------------- DrawScope
 
 /** Draws in pixels, relative to the element's top-left, like Compose's DrawScope. */
-class DrawScope internal constructor(private val originX: Int, private val originY: Int, val size: Size) {
+class DrawScope internal constructor(internal val originX: Int, internal val originY: Int, val size: Size) {
     val center get() = size.center
 
     private fun fill(outline: Outline, top: Float, bottom: Float, color: Color) =

@@ -17,6 +17,7 @@ import platform.posix.time
 import platform.posix.time_tVar
 import platform.posix.timespec
 import platform.posix.tm
+import ui.Box
 import ui.Canvas
 import ui.Color
 import ui.Device
@@ -24,7 +25,11 @@ import ui.DrawScope
 import ui.Modifier
 import ui.Offset
 import ui.Size
+import ui.dp
 import ui.fillMaxSize
+import ui.fillMaxWidth
+import ui.led.Marquee
+import ui.offset
 import ui.rememberFrameMillis
 import kotlin.math.cos
 import kotlin.math.floor
@@ -226,26 +231,30 @@ private const val MESSAGE = "Jetpack Compose runtime on an LED matrix * no Andro
 /** The message in rainbow letters between two waves; on a strip, small and alone. Enter: faster. */
 @Composable
 internal fun MarqueePage(style: Int) {
+    val strip = Device.height < 16
+    val scale = if (strip) 1 else 2
+    Box(Modifier.fillMaxSize()) {
+        Marquee(
+            MESSAGE,
+            Modifier.fillMaxWidth().offset(y = ((Device.height - 7 * scale) / 2).dp),
+            speed = (if (style % 2 == 0) 20 else 45).dp,  // LEDs per second
+            repeat = true,
+            gap = 0,  // the message ends in its own gap
+            scale = scale,
+            colors = { i, millis -> hue(i * 0.04f - millis / 1000f * 0.25f) },
+        )
+        if (!strip) Waves()
+    }
+}
+
+/** Two rainbow waves, along the top and the bottom. */
+@Composable
+private fun Waves() {
     val millis by rememberFrameMillis(true)
     Canvas(Modifier.fillMaxSize()) {
         val t = millis / 1000f
         val w = size.width.toInt()
         val h = size.height.toInt()
-        val strip = isStrip()
-        val scale = if (strip) 1 else 2
-        val cell = 6 * scale  // the font's 6-pixel cell
-        val total = MESSAGE.length * cell
-        val speed = if (style % 2 == 0) 20f else 45f  // LEDs per second
-        val start = -((t * speed).toInt() % total)
-        val y = ((h - 7 * scale) / 2).toFloat()
-        for (copy in 0..1) {
-            for (i in MESSAGE.indices) {
-                val x = start + copy * total + i * cell
-                if (x >= w || x + cell <= 0) continue
-                drawText(MESSAGE[i].toString(), Offset(x.toFloat(), y), hue(i * 0.04f - t * 0.25f), scale = scale)
-            }
-        }
-        if (strip) return@Canvas
         for (x in 0 until w) {
             val a = sin(x / 5f + t * 4f) * 2f
             val c = hue(x / w.toFloat() + t * 0.1f, 0.6f)

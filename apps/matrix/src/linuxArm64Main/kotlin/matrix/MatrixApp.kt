@@ -2,22 +2,16 @@ package matrix
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
 import ui.Box
-import ui.Canvas
-import ui.Color
 import ui.Device
 import ui.Modifier
-import ui.Offset
 import ui.PointerEventType
-import ui.Size
 import ui.fillMaxSize
+import ui.led.PageDots
 import ui.pointerInput
 
 // An app for LED matrices, made for one 64x32 HUB75 panel (one dp per LED)
@@ -70,29 +64,5 @@ internal fun MatrixApp() {
             Page.Marquee -> MarqueePage(style)
         }
         PageDots(page, pages.size)
-    }
-}
-
-/**
- * Which page this is, as dots along the bottom edge, for 1.5 s after a
- * change, on black one LED around (on a strip 8 LEDs high: only beside).
- */
-@Composable
-private fun PageDots(page: Int, count: Int) {
-    var visible by remember { mutableStateOf(true) }
-    LaunchedEffect(page) {
-        visible = true
-        delay(1500)
-        visible = false
-    }
-    if (!visible) return
-    Canvas(Modifier.fillMaxSize()) {
-        val x0 = ((size.width - (count * 3 - 1)) / 2).toInt().toFloat()
-        val y = size.height - 1
-        val margin = if (size.height < 16) 0f else 1f
-        drawRect(Color.Black, Offset(x0 - 1, y - margin), Size(count * 3 + 1f, 1f + margin))
-        for (i in 0 until count) {
-            drawRect(if (i == page) Color.White else Color(0xff3a3a3a), Offset(x0 + i * 3, y), Size(2f, 1f))
-        }
     }
 }
