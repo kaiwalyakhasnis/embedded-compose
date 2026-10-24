@@ -195,7 +195,12 @@ internal object Raster {
 // --------------------------------------------------------------- DrawScope
 
 /** Draws in pixels, relative to the element's top-left, like Compose's DrawScope. */
-class DrawScope internal constructor(internal val originX: Int, internal val originY: Int, val size: Size) {
+class DrawScope internal constructor(
+    /** Where this box's top-left is on the screen, in pixels. */
+    val originX: Int,
+    val originY: Int,
+    val size: Size,
+) {
     val center get() = size.center
 
     private fun fill(outline: Outline, top: Float, bottom: Float, color: Color) =
@@ -313,6 +318,9 @@ class DrawScope internal constructor(internal val originX: Int, internal val ori
 }
 
 // --------------------------------------------------------------- text, images
+
+/** The size of [text] in the display font at [scale], outside of drawing (e.g. when measuring). */
+fun measureText(text: String, scale: Int = 1): IntSize = TextRenderer.measure(text, scale)
 
 internal object TextRenderer {
     val charWidth by lazy { ec_font_width() }

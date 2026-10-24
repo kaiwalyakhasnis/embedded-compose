@@ -24,7 +24,8 @@ panel, and reads touch and keys from evdev.
 ```
 @Composable UI          apps/<app>         remember, mutableStateOf, LaunchedEffect, ...
 androidx.compose.runtime                   Recomposer, snapshots, frame clock (official artifact)
-toolkit                 core/ui            LayoutNode tree, Box/Row/Column/Text/Canvas/Button, Modifiers, ui.led
+toolkit                 core/ui            LayoutNode tree, Box/Row/Column/Text/Canvas/Button, Modifiers
+                        core/led           ui.led: parts for small LED panels (apps opt in)
 platform contract       core/hal/ec_hal.h  fill, text, image, flip, input events, clock (C)
 backend                 backends/          minui (fbdev/DRM/ADF), matrix + hub75/max7219 (LED panels)
 kernel                  /dev/fb0, DRM, GPIO, /dev/input/event*
@@ -107,12 +108,15 @@ round rects, circles, ovals, lines, polygons and arcs, filled or stroked,
 with alpha. The whole Compose runtime is available: state, effects,
 `withFrameNanos`, `animateFloatAsState`.
 
-For small LED panels (`ui.led`, in `core/ui`): `Marquee` (scrolling text,
+For small LED panels, `core/led` (package `ui.led`): `Marquee` (scrolling text,
 once across or round and round), `FitOrScroll` (still if it fits, else
 scrolling), `LedIcon` with `LedIcons` and your own `ledBitmap("..#.. .###.")`,
 `SmallText` (a 3x5 font: `12:34:56` fits on 32 LEDs), `BarGraph`,
-`ProgressBar`, `Blink`, `PageDots` and `SlideTransition`. They work on any
-board; sizes are in pixels or dp, so on the phone they want a `scale`.
+`ProgressBar`, `Blink`, `PageDots` and `SlideTransition`. It is a module of
+its own: an app that wants it adds `implementation(project(":core:led"))`
+to its `build.gradle.kts` (as `apps/matrix` does), and the others don't
+compile it. It works on any board; sizes are in pixels or dp, so on the
+phone it wants a `scale`.
 The [LED matrix playground](https://kaiwalyakhasnis.github.io/embedded-compose-led-matrix-playground/)'s
 *LED components* example shows each one, in the browser.
 
@@ -125,7 +129,8 @@ Compose UI.
 ```
 ec                 build/run/test driver (./ec help)
 apps/              demo/, charger/, matrix/
-core/ui/           toolkit (Kotlin), ui/led  core/hal/  platform contract (C)
+core/ui/           toolkit (Kotlin)          core/hal/  platform contract (C)
+core/led/          ui.led: LED panel parts, on core/ui (for the apps that use it)
 backends/          linux/ (evdev, clock, main), minui/ (display),
                    matrix/ (LED panels) with hub75/ and max7219/ (Raspberry Pi)
 boards/            one directory per device: everything device-specific

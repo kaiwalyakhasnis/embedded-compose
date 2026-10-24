@@ -14,8 +14,8 @@ marquee without its waves. Four pages:
   settles.
 - **Marquee:** a message in rainbow letters between two waves.
 
-The scrolling message and the page dots are the toolkit's `ui.led.Marquee`
-and `ui.led.PageDots`.
+The scrolling message and the page dots are `ui.led.Marquee` and
+`ui.led.PageDots`, from `core/led`.
 
 **Left/Right** (or Up/Down, or the volume keys) change the page, and
 **Enter** changes the page's style: colours, palette, a new Life pattern,

@@ -22,7 +22,7 @@ import ui.MeasureResult
 import ui.Modifier
 import ui.Offset
 import ui.Text
-import ui.TextRenderer
+import ui.measureText
 import ui.dp
 
 // Scrolling text, in the board's font. Text can't be clipped (the display
@@ -61,7 +61,8 @@ fun Marquee(
     val width = remember { IntArray(1) }  // from the last measure
     val currentSpeed by rememberUpdatedState(speed)
     val currentOnDone by rememberUpdatedState(onDone)
-    val textSize = TextRenderer.measure(text, scale)
+    val textSize = measureText(text, scale)
+    val cell = measureText(" ", scale).width  // one character
     val currentTextWidth by rememberUpdatedState(textSize.width)
     LaunchedEffect(text, repeat) {
         var t0 = -1L
@@ -86,12 +87,12 @@ fun Marquee(
         val w = size.width.toInt()
         val x = moved(millis.longValue, currentSpeed)
         if (!repeat) {
-            drawRun(text, w - x, color, colors, millis.longValue, scale)
+            drawRun(text, w - x, cell, color, colors, millis.longValue, scale)
         } else {
-            val cycle = textSize.width + gap * TextRenderer.charWidth * scale
+            val cycle = textSize.width + gap * cell
             var start = -(x % cycle)
             while (start < w) {
-                drawRun(text, start, color, colors, millis.longValue, scale)
+                drawRun(text, start, cell, color, colors, millis.longValue, scale)
                 start += cycle
             }
         }
@@ -102,8 +103,7 @@ fun Marquee(
  * [text] at [x] in this box, without characters that would stick out of it:
  * only at the screen's edges, which clip, may they be partly visible.
  */
-private fun DrawScope.drawRun(text: String, x: Int, color: Color, colors: ((Int, Long) -> Color)?, millis: Long, scale: Int) {
-    val cell = TextRenderer.charWidth * scale
+private fun DrawScope.drawRun(text: String, x: Int, cell: Int, color: Color, colors: ((Int, Long) -> Color)?, millis: Long, scale: Int) {
     val w = size.width.toInt()
     val minX = if (originX <= 0) Int.MIN_VALUE else 0  // left edge on the screen's: partly off is fine
     val maxX = if (originX + w >= Device.width) Int.MAX_VALUE else w
@@ -134,7 +134,7 @@ fun FitOrScroll(
     alignment: Alignment = Alignment.Center,
 ) {
     var width by remember { mutableIntStateOf(-1) }
-    val textWidth = TextRenderer.measure(text, scale).width
+    val textWidth = measureText(text, scale).width
     val policy = remember(textWidth) {
         MeasurePolicy { children, c ->
             val w = if (c.hasBoundedWidth) c.maxWidth else textWidth

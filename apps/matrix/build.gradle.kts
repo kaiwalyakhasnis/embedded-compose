@@ -17,6 +17,7 @@ kotlin {
         val linuxArm64Main by getting {
             dependencies {
                 implementation(project(":core:ui"))
+                implementation(project(":core:led"))
             }
         }
         all {
