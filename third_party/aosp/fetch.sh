@@ -50,6 +50,10 @@ rm "$TMP/system/core/libsync/include/sync/sync.h" 2>/dev/null || true
 mkdir -p "$TMP/system/core/libsync/include/sync"
 ln -s ../android/sync.h "$TMP/system/core/libsync/include/sync/sync.h"
 
+for f in Roboto-Regular.ttf Roboto-Medium.ttf NOTICE README.android; do  # ui.material's text
+  file platform/external/roboto-fonts "$f" "external/roboto-fonts/$f"
+done
+
 archive platform/external/zlib "" external/zlib.full
 archive platform/external/libpng "" external/libpng.full
 archive platform/external/libdrm "" external/libdrm.full
@@ -76,6 +80,7 @@ Fetched: $(date -u +%Y-%m-%d) by fetch.sh from $GS
   platform/external/zlib       src/*.c *.h
   platform/external/libpng     *.c *.h
   platform/external/libdrm     *.c *.h, include/
+  platform/external/roboto-fonts  Roboto-Regular.ttf, Roboto-Medium.ttf
 EOF
 echo "vendored into $DST:"
 du -sh "$DST"/*/* | sed "s|$DST/||"

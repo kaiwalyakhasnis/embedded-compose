@@ -1,13 +1,15 @@
 // The display part of ec_hal.h on AOSP recovery's minui (third_party/aosp,
 // compiled unmodified). Every pixel goes through minui's gr_* functions; this
-// file only clips (minui drops any shape that is partly off-screen) and draws
-// the minui font at integer scales.
+// file only clips (minui drops any shape that is partly off-screen), draws
+// the minui font at integer scales, and sends big opaque fills through
+// gr_blit (see solid_fill).
 #include "ec_hal.h"
 
 #include <fcntl.h>
 #include <linux/fb.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -46,7 +48,32 @@ void ec_color(int r, int g, int b, int a) {
   gr_color(g_r, g_g, g_b, g_a);
 }
 
-void ec_clear(void) { gr_clear(); }
+// gr_fill() and gr_clear() (unless the color is a gray: memset) write the
+// framebuffer a byte at a time, and it is uncached memory: a full screen
+// takes ~12 ms on the Nexus 5X. gr_blit() copies rows with memcpy, so big
+// opaque fills copy a row of their color instead.
+static void solid_fill(int x1, int y1, int x2, int y2) {
+  static uint8_t* row = nullptr;
+  static int row_color = -1;
+  const int color = (g_r << 16) | (g_g << 8) | g_b;
+  if (row == nullptr) row = static_cast<uint8_t*>(malloc((size_t)g_w * 4));
+  if (color != row_color) {
+#if defined(RECOVERY_ABGR) || defined(RECOVERY_BGRA)
+    const uint8_t px[4] = {(uint8_t)g_b, (uint8_t)g_g, (uint8_t)g_r, 255};  // as gr_color() swaps them
+#else
+    const uint8_t px[4] = {(uint8_t)g_r, (uint8_t)g_g, (uint8_t)g_b, 255};
+#endif
+    for (int x = 0; x < g_w; ++x) memcpy(row + 4 * x, px, 4);
+    row_color = color;
+  }
+  GRSurface s = {x2 - x1, 1, g_w * 4, 4, row};
+  for (int y = y1; y < y2; ++y) gr_blit(&s, 0, 0, x2 - x1, 1, x1, y);
+}
+
+void ec_clear(void) {
+  if (g_r == g_g && g_r == g_b) gr_clear();
+  else solid_fill(0, 0, g_w, g_h);
+}
 
 // gr_fill() silently drops a rectangle that is even partly off-screen, so
 // clip here.
@@ -56,7 +83,8 @@ void ec_fill(int x1, int y1, int x2, int y2) {
   x2 = std::min(x2, g_w);
   y2 = std::min(y2, g_h);
   if (x1 >= x2 || y1 >= y2) return;
-  gr_fill(x1, y1, x2, y2);
+  if (g_a == 255 && (x2 - x1) >= 64 && (x2 - x1) * (y2 - y1) >= 4096) solid_fill(x1, y1, x2, y2);
+  else gr_fill(x1, y1, x2, y2);
 }
 
 // DEV ONLY (EC_DEV_CAPTURE=1, or 2 for half size): screen capture without
@@ -137,6 +165,22 @@ void ec_text(int x, int y, const char* s, int scale, int bold) {
     return;
   }
   scaled_text(font, x, y, s, std::max(scale, 1), bold != 0);
+}
+
+// Masks go through gr_texticon(), which blends a one-byte-per-pixel surface
+// in the current color (as minui's own font is drawn); clipped here, since it
+// too drops anything partly off-screen.
+void ec_mask(int x, int y, int w, int h, const unsigned char* mask, int r, int g, int b, int a) {
+  const int stride = w;
+  int sx = 0, sy = 0;
+  if (x < 0) { sx = -x; w += x; x = 0; }
+  if (y < 0) { sy = -y; h += y; y = 0; }
+  w = std::min(w, g_w - x);
+  h = std::min(h, g_h - y);
+  if (w <= 0 || h <= 0) return;
+  ec_color(r, g, b, a);
+  GRSurface s = {w, h, stride, 1, const_cast<unsigned char*>(mask) + sy * stride + sx};
+  gr_texticon(x, y, &s);
 }
 
 // minui loads /res/images/<name>.png.

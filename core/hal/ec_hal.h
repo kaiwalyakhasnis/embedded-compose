@@ -42,6 +42,12 @@ int  ec_image_height(long handle);
 void ec_image_draw(long handle, int x, int y);  // clipped
 void ec_image_free(long handle);
 
+// Coverage mask: w x h bytes (0-255, rows packed) blended at (x, y) in the
+// color (r, g, b, a); clipped. Anti-aliased text and shapes (ui.material).
+// backends/linux has a generic one (a fill per pixel); a display may have a
+// faster one (minui: gr_texticon).
+void ec_mask(int x, int y, int w, int h, const unsigned char* mask, int r, int g, int b, int a);
+
 // ---- input ----
 enum {
   EC_EV_KEY = 1,          // code = linux KEY_*, value = 1 down / 0 up / 2 repeat

@@ -3,6 +3,7 @@
 #
 #   ./ec boards                     list boards
 #   ./ec build <board>              app + backend -> binary -> initramfs (or bundle) -> image
+#   ./ec binary <board>             only the binary (for an image made elsewhere): out/<board>/native/
 #   ./ec run   <board>              boot it (QEMU window, or the board's deploy, e.g. fastboot boot)
 #   ./ec test  <board> [args]       UI test on an emulated board (tools/uitest.py --help)
 #   ./ec shot  <board> [file.png]   screenshot of a running board (emulated, or one with board_shot)
@@ -12,8 +13,10 @@
 #
 # Environment: APP=<name> (apps/<name>; default: the board's BOARD_APP, else
 # demo), or APP_DIR=<dir> for an app kept outside this repo (named after its
-# directory; output in out/<board>-<name>/), HEADLESS=1, TRACE=1,
-# JOBS=<n>, EC_ENV_EXTRA="NAME=value ..." (added to the app's environment).
+# directory; output in out/<board>-<name>/; libraries outside this repo in
+# its app.env: APP_LIBS="<name>=<dir> ...", dirs relative to the app's),
+# HEADLESS=1, TRACE=1, JOBS=<n>, EC_ENV_EXTRA="NAME=value ..." (added to the
+# app's environment).
 # Machine-specific paths go in boards/<board>/local.env (not in git).
 set -e
 EC_ROOT=$(cd "$(dirname "$0")" && pwd)
@@ -27,7 +30,7 @@ if [ -n "$APP_DIR" ]; then
   export APP_DIR   # settings.gradle.kts includes it as :apps:<name>
 fi
 
-usage() { sed -n '2,16s/^# \{0,1\}//p' "$0"; exit "${1:-0}"; }
+usage() { sed -n '2,20s/^# \{0,1\}//p' "$0"; exit "${1:-0}"; }
 
 # Loads boards/<name>/board.sh (+ its local.env) into this shell.
 load_board() {
@@ -50,8 +53,16 @@ load_board() {
   APP=${APP:-${BOARD_APP:-demo}}
   [ -n "$APP_DIR" ] || APP_DIR=$EC_ROOT/apps/$APP
   [ -d "$APP_DIR" ] || die "no app '$APP' in apps/"
-  APP_IMAGES= APP_NATIVE=
+  APP_IMAGES= APP_FONTS= APP_NATIVE= APP_LIBS=
   [ -f "$APP_DIR/app.env" ] && . "$APP_DIR/app.env"
+  libs=
+  for lib in $APP_LIBS; do  # name=dir, dir made absolute (settings.gradle.kts includes them)
+    dir=${lib#*=}
+    case $dir in /*) ;; *) dir=$APP_DIR/$dir ;; esac
+    [ -d "$dir" ] || die "APP_LIBS: no ${lib%%=*} library at $dir"
+    libs="$libs ${lib%%=*}=$(cd "$dir" && pwd)"
+  done
+  export APP_LIBS="${libs# }"
   mkdir -p "$BOARD_OUT"
 }
 
@@ -145,6 +156,13 @@ cmd_build() {
   note "done: $(ls -l "$APP_BIN" | awk '{print $5}') byte binary; image in ${BOARD_OUT#"$EC_ROOT"/}/"
 }
 
+cmd_binary() {
+  load_board "$1"
+  build_app
+  build_binary
+  note "done: $APP_BIN"
+}
+
 cmd_run() {
   load_board "$1"
   need_build
@@ -206,7 +224,7 @@ cmd_clean() {
 }
 
 case $1 in
-  build|run|test|shot|record|package|clean|boards) c=$1; shift; "cmd_$c" "$@" ;;
+  build|binary|run|test|shot|record|package|clean|boards) c=$1; shift; "cmd_$c" "$@" ;;
   -h|--help|help|"") usage ;;
   *) usage 1 ;;
 esac

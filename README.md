@@ -26,7 +26,8 @@ panel, and reads touch and keys from evdev.
 androidx.compose.runtime                   Recomposer, snapshots, frame clock (official artifact)
 toolkit                 core/ui            LayoutNode tree, Box/Row/Column/Text/Canvas/Button, Modifiers
                         core/led           ui.led: parts for small LED panels (apps opt in)
-platform contract       core/hal/ec_hal.h  fill, text, image, flip, input events, clock (C)
+                        core/material      ui.material: Material 3, Roboto text (apps opt in)
+platform contract       core/hal/ec_hal.h  fill, text, mask, image, flip, input events, clock (C)
 backend                 backends/          minui (fbdev/DRM/ADF), matrix + hub75/max7219 (LED panels)
 kernel                  /dev/fb0, DRM, GPIO, /dev/input/event*
 ```
@@ -65,7 +66,14 @@ On the Nexus 5X the demo uses 7 MB of RAM idle and ~12 MB animating, at
 | [`charger`](apps/charger/README.md) | an off-mode charging screen for phones (`APP=charger`) |
 | [`matrix`](apps/matrix/README.md) | clock, plasma, Game of Life and a message for 64x32 LED panels (default on the LED boards) |
 
-An app can also live outside this repo: `APP_DIR=<dir> ./ec build <board>`.
+An app can also live outside this repo: `APP_DIR=<dir> ./ec build <board>`,
+or `./ec binary <board>` for just the executable (for an image made
+elsewhere). Libraries of its own, also outside, go in its `app.env`:
+`APP_LIBS="<name>=<dir>"`, used as `project(":libs:<name>")`. For example
+[nexus5x-local-llm](https://github.com/kaiwalyakhasnis/nexus5x-local-llm)'s
+`a2ui` screen (a language model on the phone answers as
+[A2UI](https://a2ui.org) screens) is an app there, drawn with the library
+[embedded-compose-a2ui](https://github.com/kaiwalyakhasnis/embedded-compose-a2ui).
 
 ## Getting started
 
@@ -120,9 +128,25 @@ phone it wants a `scale`.
 The [LED matrix playground](https://kaiwalyakhasnis.github.io/embedded-compose-led-matrix-playground/)'s
 *LED components* example shows each one, in the browser.
 
-Not yet: scrolling, clipping, text input, scalable fonts, transforms,
-Material components. This is Compose's runtime with a small toolkit, not
-Compose UI.
+For phone screens that should look like Android's, `core/material`
+(package `ui.material`) is Material 3 on the toolkit. `Text` uses Roboto
+from its TrueType outlines, anti-aliased, in Material's type scale
+(`Typography.bodyLarge`, `titleLarge`, ...); the fonts come from AOSP
+(`third_party/aosp/external/roboto-fonts`) and an app lists them in its
+`app.env` (`APP_FONTS`, put in `/res/fonts`). Colors are Material's roles:
+the baseline dark or light scheme, or tones of a seed color
+(`darkColorScheme(seed)`). Components follow the specs: `Button` (filled,
+tonal, outlined, text, elevated), `IconButton`, `Card`, `CheckboxRow`,
+`FilterChip` in a `FlowRow`, `Slider`, `TabRow`, `TopAppBar`,
+`CircularProgressIndicator`, `TextFieldDisplay`, dividers and `Icon`
+(Material names). Without touch, every control shows Material's focus
+indicator. Shapes are anti-aliased (`roundRect`, `circle`, `Vector`); the
+backend blends coverage masks (`ec_mask`). Not the real Compose Material:
+no ripples or motion, simple shadows, no kerning.
+Also opt-in (`implementation(project(":core:material"))`).
+
+Not yet: clipping, text input, transforms. This is Compose's runtime with
+a small toolkit, not Compose UI.
 
 ## Layout
 
@@ -131,11 +155,12 @@ ec                 build/run/test driver (./ec help)
 apps/              demo/, charger/, matrix/
 core/ui/           toolkit (Kotlin)          core/hal/  platform contract (C)
 core/led/          ui.led: LED panel parts, on core/ui (for the apps that use it)
+core/material/     ui.material: Material 3 (Roboto text, colors, components), on core/ui
 backends/          linux/ (evdev, clock, main), minui/ (display),
                    matrix/ (LED panels) with hub75/ and max7219/ (Raspberry Pi)
 boards/            one directory per device: everything device-specific
 tools/             init, cpio writer, QEMU launcher, UI test, GIF tour, bundle scripts
-third_party/aosp/  minui + libpng/zlib/libdrm from AOSP android-8.1.0_r52, unmodified
+third_party/aosp/  minui + libpng/zlib/libdrm + Roboto from AOSP android-8.1.0_r52, unmodified
 ```
 
 Third-party code keeps its own licences: AOSP sources under Apache 2.0 and

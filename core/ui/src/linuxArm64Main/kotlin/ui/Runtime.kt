@@ -202,6 +202,8 @@ object Device {
     var onKey: ((code: Int, value: Int) -> Unit)? = null
     /** Called for every input event of any kind (user activity). */
     var onInput: (() -> Unit)? = null
+    /** Called for every key event after [onKey]; returning true keeps the key from focus handling (the app uses it). */
+    var keyFilter: ((code: Int, value: Int) -> Boolean)? = null
 
     /** Screen size in pixels, set when [runApp] starts. */
     var width = 0
@@ -268,7 +270,10 @@ internal class InputDispatcher(private val root: LayoutNode, private val invalid
     fun handle(type: Int, code: Int, value: Int, x: Int, y: Int) {
         if (Trace.enabled) log("input type=$type code=$code value=$value x=$x y=$y")
         Device.onInput?.invoke()
-        if (type == EC_EV_KEY.toInt()) Device.onKey?.invoke(code, value)
+        if (type == EC_EV_KEY.toInt()) {
+            Device.onKey?.invoke(code, value)
+            if (Device.keyFilter?.invoke(code, value) == true) return
+        }
         when (type) {
             EC_EV_POINTER_DOWN.toInt() -> pointerDown(x, y)
             EC_EV_POINTER_MOVE.toInt() -> pointerMove(x, y)

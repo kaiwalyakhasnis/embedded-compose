@@ -5,3 +5,4 @@ Fetched: 2026-10-20 by fetch.sh from https://android.googlesource.com
   platform/external/zlib       src/*.c *.h
   platform/external/libpng     *.c *.h
   platform/external/libdrm     *.c *.h, include/
+  platform/external/roboto-fonts  Roboto-Regular.ttf, Roboto-Medium.ttf (added 2026-10-29, same tag)

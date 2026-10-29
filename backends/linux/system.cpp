@@ -37,4 +37,16 @@ void ec_power_off(void) {
 }
 
 // The program itself is Kotlin: the app's Main.kt exports ec_app_main.
+// The generic ec_mask, for displays without their own: one blended fill per pixel.
+__attribute__((weak)) void ec_mask(int x, int y, int w, int h, const unsigned char* mask, int r, int g, int b, int a) {
+  for (int j = 0; j < h; ++j) {
+    for (int i = 0; i < w; ++i) {
+      int c = mask[j * w + i];
+      if (c == 0) continue;
+      ec_color(r, g, b, a * c / 255);
+      ec_fill(x + i, y + j, x + i + 1, y + j + 1);
+    }
+  }
+}
+
 int main() { return ec_app_main(); }
